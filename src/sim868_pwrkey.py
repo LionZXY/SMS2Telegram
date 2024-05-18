@@ -4,10 +4,29 @@ import gpiod
 from gpiozero import LED
 import time
 import serial
+from termcolor import colored
 
 from src.conf import SERIAL_PORT
-from src.sim868_cmd import send_ping
 from src.telegram_bot import send_message
+
+
+def __send_cmd(ser: serial.Serial, cmd: str) -> str:
+    print("Request to SIM868:", colored(cmd, color="cyan"))
+    ser.write((cmd + "\n").encode())
+    ser.flush()
+    line = ser.readline()
+    if line.decode() != cmd + "\r\n":
+        raise Exception("Failed send command " + cmd)
+    line = ser.readline()
+    line_decoded = line.decode()
+    print("Answer from SIM868:", colored(line, color="green"))
+    return line_decoded
+
+
+def __send_ping(ser: serial.Serial):
+    line = __send_cmd(ser, "AT")
+    if line != "OK\r\n":
+        raise Exception("Module not available")
 
 
 def __check_gsm_module() -> bool:
@@ -15,7 +34,7 @@ def __check_gsm_module() -> bool:
     ser = serial.Serial(SERIAL_PORT, timeout=10, write_timeout=10)
     print(ser)
     try:
-        send_ping(ser)
+        __send_ping(ser)
     except Exception as error:
         print("Can't send ping because error", error)
         return False
@@ -26,7 +45,7 @@ def __check_gsm_module() -> bool:
 
 def power_on_sim868():
     print("Try power on/off SIM868")
-    led = LED(pin=4) # GPIO4, PIN 7 (https://gpiozero.readthedocs.io/en/latest/recipes.html#pin-numbering)
+    led = LED(pin=4)  # GPIO4, PIN 7 (https://gpiozero.readthedocs.io/en/latest/recipes.html#pin-numbering)
     print(led)
     led.off()
     print("Sleep 4 seconds")
