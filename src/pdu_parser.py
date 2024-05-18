@@ -1,0 +1,4 @@
+from smspdudecoder.easy import read_incoming_sms
+
+sms_data = read_incoming_sms('07919995599999F7040C919955592204210008425081619310610E041F044004380432043504420020')
+print(sms_data)
