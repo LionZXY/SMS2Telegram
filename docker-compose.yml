@@ -3,6 +3,7 @@ services:
     build: .
     # Wait for fix https://github.com/gpiozero/gpiozero/discussions/1117
     privileged: true
+    restart: always
     devices:
     - /dev/gpiomem4
     - /dev/ttyAMA0
