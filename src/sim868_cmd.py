@@ -10,6 +10,11 @@ from smspdudecoder.easy import read_incoming_sms
 from src.telegram_bot import send_sms_message
 
 
+def __remove_message_with_id(id: int):
+    print("Remove message with id " + str(id))
+    to_request_queue.put("AT+CMGD=" + str(id))
+
+
 async def check_unread_message():
     to_request_queue.put("AT+CMGL=4")
     pending_messages = {}
@@ -26,21 +31,26 @@ async def check_unread_message():
             if partial_data != False:
                 reference = partial_data['reference']
                 parts = pending_messages.get(reference, [None for i in range(partial_data['parts_count'])])
-                parts[partial_data['part_number'] - 1] = sms_data['content']
+                sms_data['message_index'] = meta_info['index']
+                parts[partial_data['part_number'] - 1] = sms_data
                 pending_messages[reference] = parts
 
                 if None not in parts:
                     await send_sms_message(
                         sender=sms_data['sender'],
                         time=sms_data['date'],
-                        text=''.join(parts)
+                        text=''.join(data['content'] for data in parts)
                     )
+                    for data in parts:
+                        index = data['message_index']
+                        __remove_message_with_id(index)
             else:
                 await send_sms_message(
                     sender=sms_data['sender'],
                     time=sms_data['date'],
                     text=sms_data['content']
                 )
+                __remove_message_with_id(meta_info['index'])
         try:
             response = received_response_queue.get(timeout=10)
         except Empty:
