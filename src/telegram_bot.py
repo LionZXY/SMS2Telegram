@@ -1,4 +1,5 @@
-from datetime import datetime, timezone
+from datetime import datetime
+from pytz import timezone
 
 import telegram
 from telegram.helpers import escape_markdown
