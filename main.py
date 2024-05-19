@@ -16,8 +16,7 @@ async def main():
     await check_unread_message()
     while True:
         print("Ожидаем сообщения...")
-        request_check_message_event.wait()
-        print("Пришло сообщение...")
+        request_check_message_event.wait(timeout=10)
         await check_unread_message()
         request_check_message_event.clear()
 

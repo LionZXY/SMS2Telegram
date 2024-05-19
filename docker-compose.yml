@@ -8,3 +8,8 @@ services:
     - /dev/gpiomem4
     - /dev/ttyAMA0
     tty: true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
