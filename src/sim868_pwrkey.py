@@ -59,5 +59,6 @@ async def check_and_enable_gsm_module():
     while not is_loaded:
         await send_message("SIM868 не загружен, пытаюсь включить...")
         power_on_sim868()
+        time.sleep(30)
         is_loaded = __check_gsm_module()
     await send_message("SIM868 загружен, пинг прошел успешно")
