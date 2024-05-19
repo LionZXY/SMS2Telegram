@@ -3,11 +3,17 @@ from queue import Queue, Empty
 
 from parse import parse
 
+from src.conf import SMSC
 from src.sim868_cmd_queue import to_request_queue, received_response_queue
 
 from smspdudecoder.easy import read_incoming_sms
 
 from src.telegram_bot import send_sms_message
+
+
+def setup_module():
+    to_request_queue.put('AT+CSCA="' + SMSC + '"')
+    to_request_queue.put('AT+CMGF=0')  # Enable PDU mod
 
 
 def __remove_message_with_id(id: int):
