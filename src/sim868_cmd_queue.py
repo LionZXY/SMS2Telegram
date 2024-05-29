@@ -19,6 +19,8 @@ def __read_all_income_text(ser: serial.Serial):
         line_decoded = line.decode()
         if line_decoded.startswith("+CMTI"):
             request_check_message_event.set()
+        elif line == "\r\n":
+            print("Skip empty line")
         else:
             received_response_queue.put(line_decoded)
         line = ser.readline()
