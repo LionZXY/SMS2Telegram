@@ -4,7 +4,7 @@ from queue import Queue, Empty
 from parse import parse
 
 from src.conf import SMSC
-from src.sim868_cmd_queue import to_request_queue, received_response_queue
+from src.sim868_cmd_queue import to_request_queue, received_response_queue, antenna_signal_queue
 
 from smspdudecoder.easy import read_incoming_sms
 
@@ -28,10 +28,10 @@ async def setup_module():
         raise Exception("Set PDU mod failed with response " + response)
     response = __send_cmd('AT+CANT=1,1,10')  # Enable autodetecting for antennas
     if response != "OK\r\n":
-        raise Exception("Autodetecting for antennas failed command")
-    response = received_response_queue.get()  # Waiting for antenna status
+        raise Exception("Autodetecting for antennas failed command, but receive " + response)
+    response = antenna_signal_queue.get()  # Waiting for antenna status
     if not response.startswith("+CANT:"):
-        raise Exception("Antennas command not receive status")
+        raise Exception("Antennas command not receive status, but receive " + response)
     antenna_info = parse("+CANT: {status:d}\r\n", response)
     status_text = "Unknown"
     match antenna_info['status']:
@@ -44,11 +44,16 @@ async def setup_module():
         case 3:
             status_text = "Not connected"
     await send_message("Antenna status is: " + status_text)
-    received_response_queue.get(timeout=10)  # Clean queue
+    to_request_queue.put('AT+CANT=1,0,10')  # Disable antenna notification
+    try:
+        while True:
+            received_response_queue.get(timeout=10)  # Clean queue
+    except Empty:
+        pass
     response = __send_cmd("AT+CSQ")  # Request signal quality report
     if not response.startswith("+CSQ:"):
         raise Exception("Signal quality report not received")
-    signal_info = parse("+CSQ: {strength:g}\r\n", response)
+    signal_info = parse("+CSQ: {strength:d},{}\r\n", response)
     strength = signal_info["strength"]
     strength_text = "Unknown"
     if strength < 2:

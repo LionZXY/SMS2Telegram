@@ -8,6 +8,7 @@ from src.conf import SERIAL_PORT
 
 to_request_queue = Queue()
 received_response_queue = Queue()
+antenna_signal_queue = Queue()
 
 request_check_message_event = threading.Event()
 
@@ -19,7 +20,9 @@ def __read_all_income_text(ser: serial.Serial):
         line_decoded = line.decode()
         if line_decoded.startswith("+CMTI"):
             request_check_message_event.set()
-        elif line == "\r\n":
+        elif line_decoded.startswith("+CANT"):
+            antenna_signal_queue.put(line_decoded)
+        elif line_decoded == "\r\n":
             print("Skip empty line")
         else:
             received_response_queue.put(line_decoded)

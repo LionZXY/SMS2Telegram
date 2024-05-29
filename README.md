@@ -68,4 +68,4 @@ REPORT_TIMEZONE="Europe/London"
 ## Resources
 
 - [GSM/GPRS/GNSS HAT User Manual/PDF](docs/GSM_GPRS_GNSS_HAT_User_Manual_EN.pdf)
-- [Command manual](docs/SIM868_Series_GNSS_Application_Note_V1.02.pdf)
+- [Command manual](docs/SIM800%20Series%20AT%20Command%20Manual%20V1.10.pdf)
