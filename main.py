@@ -12,8 +12,12 @@ async def main():
     await check_and_enable_gsm_module()
     receive_thread = Thread(target=receive_cmd_loop, args=[])
     receive_thread.start()
-    await setup_module()
-    await check_unread_message()
+    try:
+        await setup_module()
+        await check_unread_message()
+    except Exception as error:
+        await send_message("Failed setup module because " + str(error))
+        raise error
     while True:
         print("Waiting for messages...")
         request_check_message_event.wait(timeout=10)
