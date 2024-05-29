@@ -11,17 +11,22 @@ from smspdudecoder.easy import read_incoming_sms
 from src.telegram_bot import send_sms_message, send_message
 
 
+def __send_cmd(cmd: str) -> str:
+    to_request_queue.put(cmd)
+    response = received_response_queue.get()
+    if response == cmd + "\r\n":  # ignore echo
+        response = received_response_queue.get()
+    return response
+
+
 async def setup_module():
-    to_request_queue.put('AT+CSCA="' + SMSC + '"')
-    response = received_response_queue.get()
+    response = __send_cmd('AT+CSCA="' + SMSC + '"')
     if response != "OK\r\n":
-        raise Exception("Module not available")
-    to_request_queue.put('AT+CMGF=0')  # Enable PDU mod
-    response = received_response_queue.get()
+        raise Exception("Set SMSC failed with response " + response)
+    response = __send_cmd('AT+CMGF=0')  # Enable PDU mod
     if response != "OK\r\n":
-        raise Exception("Module not available")
-    to_request_queue.put('AT+CANT=1,1,10')  # Enable autodetecting for antennas
-    response = received_response_queue.get()
+        raise Exception("Set PDU mod failed with response " + response)
+    response = __send_cmd('AT+CANT=1,1,10')  # Enable autodetecting for antennas
     if response != "OK\r\n":
         raise Exception("Module not available")
     response = received_response_queue.get()  # Waiting for antenna status
@@ -40,8 +45,7 @@ async def setup_module():
             status_text = "Not connected"
     await send_message("Antenna status is: " + status_text)
     received_response_queue.get(timeout=10)  # Clean queue
-    to_request_queue.put("AT+CSQ")  # Request signal quality report
-    response = received_response_queue.get()
+    response = __send_cmd("AT+CSQ")  # Request signal quality report
     if not response.startswith("+CSQ:"):
         raise Exception("Signal quality report not received")
     signal_info = parse("+CSQ: {strength:g}\r\n", response)
@@ -57,7 +61,9 @@ async def setup_module():
         strength_text = "Good"
     else:
         strength_text = "Excellent"
+
     await send_message("Signal quality is: " + strength_text)
+
 
 def __remove_message_with_id(id: int):
     print("Remove message with id " + str(id))
