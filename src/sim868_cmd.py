@@ -28,7 +28,7 @@ async def setup_module():
         raise Exception("Set PDU mod failed with response " + response)
     response = __send_cmd('AT+CANT=1,1,10')  # Enable autodetecting for antennas
     if response != "OK\r\n":
-        raise Exception("Module not available")
+        raise Exception("Autodetecting for antennas failed command")
     response = received_response_queue.get()  # Waiting for antenna status
     if not response.startswith("+CANT:"):
         raise Exception("Antennas command not receive status")
