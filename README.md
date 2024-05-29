@@ -62,7 +62,10 @@ REPORT_TIMEZONE="Europe/London"
 - Receive all messages (TEXT mode only: `AT+CMGL="ALL"`
 - Read message with index 1: `AT+CMGR=1`
 - Delete message with index 1: `AT+CMGD=1`
+- Set up antenna detected with URC reporting: `AT+CANT=1,1,10`
+- Check signal quality: `AT+CSQ`
 
 ## Resources
 
 - [GSM/GPRS/GNSS HAT User Manual/PDF](docs/GSM_GPRS_GNSS_HAT_User_Manual_EN.pdf)
+- [Command manual](docs/SIM868_Series_GNSS_Application_Note_V1.02.pdf)

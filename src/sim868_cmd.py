@@ -8,13 +8,56 @@ from src.sim868_cmd_queue import to_request_queue, received_response_queue
 
 from smspdudecoder.easy import read_incoming_sms
 
-from src.telegram_bot import send_sms_message
+from src.telegram_bot import send_sms_message, send_message
 
 
-def setup_module():
+async def setup_module():
     to_request_queue.put('AT+CSCA="' + SMSC + '"')
+    response = received_response_queue.get()
+    if response != "OK\r\n":
+        raise Exception("Module not available")
     to_request_queue.put('AT+CMGF=0')  # Enable PDU mod
-
+    response = received_response_queue.get()
+    if response != "OK\r\n":
+        raise Exception("Module not available")
+    to_request_queue.put('AT+CANT=1,1,10')  # Enable autodetecting for antennas
+    response = received_response_queue.get()
+    if response != "OK\r\n":
+        raise Exception("Module not available")
+    response = received_response_queue.get()  # Waiting for antenna status
+    if not response.startswith("+CANT:"):
+        raise Exception("Antennas command not receive status")
+    antenna_info = parse("+CANT: {status:d}\r\n", response)
+    status_text = "Unknown"
+    match antenna_info['status']:
+        case 0:
+            status_text = "Connected normally"
+        case 1:
+            status_text = "Connected to GND"
+        case 2:
+            status_text = "Connected to other power source"
+        case 3:
+            status_text = "Not connected"
+    await send_message("Antenna status is: " + status_text)
+    received_response_queue.get(timeout=10)  # Clean queue
+    to_request_queue.put("AT+CSQ")  # Request signal quality report
+    response = received_response_queue.get()
+    if not response.startswith("+CSQ:"):
+        raise Exception("Signal quality report not received")
+    signal_info = parse("+CSQ: {strength:g}\r\n", response)
+    strength = signal_info["strength"]
+    strength_text = "Unknown"
+    if strength < 2:
+        strength_text = "Extremely bad"
+    elif strength < 10:
+        strength_text = "Marginal"
+    elif strength < 15:
+        strength_text = "OK"
+    elif strength < 20:
+        strength_text = "Good"
+    else:
+        strength_text = "Excellent"
+    await send_message("Signal quality is: " + strength_text)
 
 def __remove_message_with_id(id: int):
     print("Remove message with id " + str(id))

@@ -12,7 +12,7 @@ async def main():
     await check_and_enable_gsm_module()
     receive_thread = Thread(target=receive_cmd_loop, args=[])
     receive_thread.start()
-    setup_module()
+    await setup_module()
     await check_unread_message()
     while True:
         print("Waiting for messages...")
